@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="莱宝福禅拍">
@@ -203,7 +206,7 @@ td{padding:15px 16px;color:var(--text-2);border-bottom:1px solid var(--border-li
 <aside class="sidebar" id="sidebar">
 <div class="brand"><div class="brand-logo">禅</div><div class="brand-name">莱宝福禅拍</div><div class="brand-slogan">Healing Studio</div></div>
 <nav class="nav" id="nav"></nav>
-<div class="sidebar-footer">© 莱宝福禅拍工作室 · v6.0</div>
+<div class="sidebar-footer">© 莱宝福禅拍工作室 · v6.1</div>
 </aside>
 <div class="sidebar-backdrop" id="backdrop" onclick="closeSidebar()"></div>
 <div class="main">
@@ -227,6 +230,21 @@ td{padding:15px 16px;color:var(--text-2);border-bottom:1px solid var(--border-li
 <div class="install-tip" id="installTip"><span>添加到主屏幕，像 App 一样使用</span><button id="installBtn">安装</button><button class="close-tip" onclick="closeInstallTip()">×</button></div>
 <div class="confirm-overlay" id="editDeductionOverlay"><div class="confirm-box" style="max-width:460px;max-height:90vh;overflow-y:auto"><div class="confirm-title">编辑扣款记录</div><div class="pay-field"><label>客户姓名</label><input type="text" class="form-input" id="edCustomer" style="min-height:44px"></div><div class="pay-field"><label>扣除时长（小时）</label><input type="number" step="0.5" class="form-input" id="edHours" style="min-height:44px"></div><div class="pay-field"><label>单价（元）</label><input type="number" class="form-input" id="edUnitPrice" style="min-height:44px"></div><div class="pay-field"><label>总价（元）</label><input type="number" class="form-input" id="edTotalPrice" style="min-height:44px"></div><div class="pay-field"><label>支付方式</label><select class="form-select" id="edPayMethod" style="min-height:44px"><option value="">请选择</option><option>微信</option><option>支付宝</option><option>现金</option><option>美团</option><option>抖音</option><option>储卡</option><option>赠送</option></select></div><div class="pay-field"><label>服务人员</label><input type="text" class="form-input" id="edStaff" style="min-height:44px"></div><div class="pay-field"><label>消费日期</label><input type="text" class="form-input rc-date-input" id="edDate" placeholder="点击选择日期" style="min-height:44px" onclick="rcOpenCalendar('edDate')" readonly></div><div class="pay-field"><label>备注</label><textarea class="form-textarea" id="edNote"></textarea></div><div class="confirm-actions"><button class="btn btn-line" id="edCancel">取消</button><button class="btn btn-solid" id="edConfirm">保存</button></div></div></div>
 <script>
+// 版本检测：强制刷新缓存
+const APP_VERSION='v6.1';
+try{
+const lastVersion=localStorage.getItem('app_version');
+if(lastVersion!==APP_VERSION){
+localStorage.setItem('app_version',APP_VERSION);
+if(lastVersion){
+// 版本变化时强制刷新（只用 location.reload() 一次）
+if(!sessionStorage.getItem('app_reloaded')){
+sessionStorage.setItem('app_reloaded','1');
+location.reload(true);
+}
+}
+}
+}catch(e){}
 // ============ 日历组件 ============
 let rcCalTarget=null,rcCalDate=new Date(),rcCalSelected=null;
 function rcOpenCalendar(inputId){
