@@ -174,6 +174,28 @@ td{padding:15px 16px;color:var(--text-2);border-bottom:1px solid var(--border-li
 .settings-theme-swatch{width:100%;aspect-ratio:1;border-radius:var(--r-md);transition:border-color .15s;margin-bottom:6px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .settings-theme-name{font-size:11px;color:var(--text-3)}
 .icon-preview-box{width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:300;overflow:hidden;flex-shrink:0}
+/* 日历组件 */
+.rc-calendar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;display:flex;align-items:flex-end;justify-content:center}
+.rc-calendar{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:420px;padding:16px;box-shadow:0 -4px 24px rgba(0,0,0,.2);animation:rcCalSlideUp .2s ease}
+@keyframes rcCalSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.rc-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rc-cal-title{font-size:16px;font-weight:600;color:var(--text-1)}
+.rc-cal-nav{display:flex;gap:8px}
+.rc-cal-nav button{width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.rc-cal-nav button:active{background:var(--bg-hover)}
+.rc-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.rc-cal-weekdays div{text-align:center;font-size:12px;color:var(--text-4);padding:4px 0}
+.rc-cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.rc-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-2);border-radius:8px;cursor:pointer;transition:background .1s}
+.rc-cal-day:active{background:var(--bg-hover)}
+.rc-cal-day.rc-other{color:var(--text-4);opacity:.4}
+.rc-cal-day.rc-today{font-weight:700;color:var(--accent)}
+.rc-cal-day.rc-selected{background:var(--accent);color:#fff;font-weight:600}
+.rc-cal-actions{display:flex;gap:8px;margin-top:12px}
+.rc-cal-actions button{flex:1;height:44px;border-radius:10px;border:none;font-size:15px;font-weight:500;cursor:pointer}
+.rc-cal-actions .rc-cal-cancel{background:var(--bg-hover);color:var(--text-2)}
+.rc-cal-actions .rc-cal-ok{background:var(--accent);color:#fff}
+.rc-date-input{cursor:pointer}
 </style>
 </head>
 <body>
@@ -198,12 +220,54 @@ td{padding:15px 16px;color:var(--text-2);border-bottom:1px solid var(--border-li
 <div class="toast" id="toast">提示</div>
 <div class="confirm-overlay" id="confirmOverlay"><div class="confirm-box"><div class="confirm-title" id="confirmTitle">确认</div><div class="confirm-desc" id="confirmDesc">确定要删除吗？</div><div class="confirm-actions"><button class="btn btn-line" id="confirmCancel">取消</button><button class="btn btn-solid" id="confirmOk">确认</button></div></div></div>
 <div class="confirm-overlay" id="payOverlay"><div class="confirm-box" style="max-width:420px"><div class="confirm-title" id="payTitle">支付信息</div><div class="pay-field"><label>支付金额（元）</label><input type="number" class="form-input" id="payAmount" placeholder="输入金额" style="min-height:44px"></div><div class="pay-field"><label>支付方式</label><div class="pay-method-grid" id="payMethodBtns"></div></div><div class="confirm-actions"><button class="btn btn-line" id="payCancel">取消</button><button class="btn btn-solid" id="payConfirm">确认</button></div></div></div>
-<div class="confirm-overlay" id="rechargeOverlay"><div class="confirm-box" style="max-width:460px;max-height:90vh;overflow-y:auto"><div class="confirm-title" id="rechargeTitle">新增充值</div><div class="pay-field"><label>客户姓名</label><input type="text" class="form-input" id="rcCustName" readonly style="min-height:44px;background:var(--bg-hover);color:var(--text-3)"></div><div class="pay-field" style="background:var(--accent-bg);border:1px solid var(--accent-light);border-radius:8px;padding:12px;margin:12px 0"><label style="color:var(--accent-text);font-weight:600">本次消费时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcConsumeHours" placeholder="如：1、1.5、2" style="min-height:44px" oninput="onRcConsumeHoursInput()"><label style="color:var(--accent-text);font-weight:600;margin-top:10px;display:block">扣卡来源</label><div style="display:flex;gap:8px"><div class="pay-method-btn active" data-src="recharge" onclick="selectRcSource('recharge')" style="flex:1">充值时长</div><div class="pay-method-btn" data-src="gift" onclick="selectRcSource('gift')" style="flex:1">赠送时长</div></div><label style="color:var(--accent-text);font-weight:600;margin-top:10px;display:block">本次消费金额（元）<span id="rcAmountHint" style="font-weight:400;font-size:11px;color:var(--text-3)"> · 赠送时长可填0</span></label><input type="number" class="form-input" id="rcConsumeAmount" placeholder="如：300" style="min-height:44px"></div><div class="pay-field"><label>卡类型</label><select class="form-select" id="rcCardType" style="min-height:44px"></select></div><div class="pay-field"><label>充值时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcHours" placeholder="如：10" style="min-height:44px"></div><div class="pay-field"><label>赠送时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcGiftHours" placeholder="0" value="0" style="min-height:44px"></div><div class="pay-field"><label>充值金额（元）</label><input type="number" class="form-input" id="rcAmount" placeholder="如：2000" style="min-height:44px"></div><div class="pay-field"><label>支付方式</label><div class="pay-method-grid" id="rcPayMethodBtns"></div></div><div class="confirm-actions"><button class="btn btn-line" id="rcCancel">取消</button><button class="btn btn-solid" id="rcConfirm">完成服务</button></div></div></div>
+<div class="confirm-overlay" id="rechargeOverlay"><div class="confirm-box" style="max-width:460px;max-height:90vh;overflow-y:auto"><div class="confirm-title" id="rechargeTitle">新增充值</div><div id="rcStepIndicator" style="display:flex;gap:4px;margin-bottom:12px"><div style="flex:1;height:4px;background:var(--accent);border-radius:2px"></div><div style="flex:1;height:4px;background:var(--bg-hover);border-radius:2px"></div><div style="flex:1;height:4px;background:var(--bg-hover);border-radius:2px"></div></div><div class="pay-field" id="rcCustNameField"><label>客户姓名</label><input type="text" class="form-input" id="rcCustName" readonly style="min-height:44px;background:var(--bg-hover);color:var(--text-3)"></div><div class="rc-step" id="rcStep1" style="display:block"><div class="pay-field" style="background:var(--accent-bg);border:1px solid var(--accent-light);border-radius:8px;padding:12px;margin:0 0 12px"><label style="color:var(--accent-text);font-weight:600">本次消费时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcConsumeHours" placeholder="如：1、1.5、2" style="min-height:44px" oninput="onRcConsumeHoursInput()"><label style="color:var(--accent-text);font-weight:600;margin-top:10px;display:block">扣卡来源</label><div style="display:flex;gap:8px"><div class="pay-method-btn active" data-src="recharge" onclick="selectRcSource('recharge')" style="flex:1">充值时长</div><div class="pay-method-btn" data-src="gift" onclick="selectRcSource('gift')" style="flex:1">赠送时长</div></div><label style="color:var(--accent-text);font-weight:600;margin-top:10px;display:block">本次消费金额（元）<span id="rcAmountHint" style="font-weight:400;font-size:11px;color:var(--text-3)"> · 赠送时长可填0</span></label><input type="number" class="form-input" id="rcConsumeAmount" placeholder="如：300" style="min-height:44px"></div><div class="pay-field"><label>消费日期</label><input type="text" class="form-input rc-date-input" id="rcConsumeDate" placeholder="点击选择日期" style="min-height:44px" onclick="rcOpenCalendar('rcConsumeDate')" readonly></div></div><div class="rc-step" id="rcStep2" style="display:none"><div class="pay-field"><label>卡类型</label><select class="form-select" id="rcCardType" style="min-height:44px"></select></div><div class="pay-field"><label>充值时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcHours" placeholder="如：10" style="min-height:44px"></div><div class="pay-field"><label>赠送时长（小时）</label><input type="number" step="0.5" class="form-input" id="rcGiftHours" placeholder="0" value="0" style="min-height:44px"></div><div class="pay-field"><label>充值金额（元）</label><input type="number" class="form-input" id="rcAmount" placeholder="如：2000" style="min-height:44px"></div><div class="pay-field"><label>充值日期</label><input type="text" class="form-input rc-date-input" id="rcDate" placeholder="点击选择日期" style="min-height:44px" onclick="rcOpenCalendar('rcDate')" readonly></div></div><div class="rc-step" id="rcStep3" style="display:none"><div class="pay-field"><label>支付方式</label><div class="pay-method-grid" id="rcPayMethodBtns"></div></div><div class="calc-box" style="margin-top:12px"><div class="form-hint" id="rcReviewText" style="white-space:pre-line"></div></div></div><div class="confirm-actions"><button class="btn btn-line" id="rcCancel">取消</button><button class="btn btn-line" id="rcPrev" style="display:none">上一步</button><button class="btn btn-solid" id="rcNext">下一步</button><button class="btn btn-solid" id="rcConfirm" style="display:none">完成</button></div></div></div>
 <div class="confirm-overlay" id="completeChoiceOverlay"><div class="confirm-box" style="max-width:380px"><div class="confirm-title">完成服务</div><div class="confirm-desc" id="completeChoiceDesc">该客户为非会员，请选择完成方式</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:8px"><button class="btn btn-solid" id="completeChoiceRecharge" style="width:100%">充卡后完成服务</button><button class="btn btn-ghost" id="completeChoiceDirect" style="width:100%">直接收款完成</button><button class="btn btn-line" id="completeChoiceCancel" style="width:100%">取消</button></div></div></div>
 <div class="confirm-overlay" id="serviceRecordOverlay"><div class="confirm-box" style="max-width:520px;max-height:90vh;overflow-y:auto"><div class="confirm-title" id="srTitle">服务记录</div><div id="srBody" style="margin:12px 0"></div><div class="confirm-actions"><button class="btn btn-line" id="srCancel">取消</button><button class="btn btn-solid" id="srConfirm">保存并完成</button></div></div></div>
 <div class="confirm-overlay" id="fullSigOverlay" style="background:rgba(0,0,0,.8)"><div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px"><div style="color:#fff;font-size:16px;margin-bottom:12px">✍️ 全屏签名（双击关闭）</div><div class="signature-box" id="fullSigBox" style="width:100%;max-width:800px;height:60vh;min-height:300px;background:#fff;border-radius:12px;touch-action:none"><canvas id="fullSigCanvas" style="width:100%;height:100%;border-radius:12px"></canvas><div class="signature-placeholder" id="fullSigPlaceholder" style="color:var(--text-4)">在此手写签名</div><button type="button" class="signature-clear" onclick="clearFullSignature()">清除</button></div><div style="display:flex;gap:12px;margin-top:16px"><button class="btn btn-line" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="closeFullSignature(false)">取消</button><button class="btn btn-solid" onclick="closeFullSignature(true)">确认签名</button></div></div></div>
 <div class="install-tip" id="installTip"><span>添加到主屏幕，像 App 一样使用</span><button id="installBtn">安装</button><button class="close-tip" onclick="closeInstallTip()">×</button></div>
 <script>
+// ============ 日历组件 ============
+let rcCalTarget=null,rcCalDate=new Date(),rcCalSelected=null;
+function rcOpenCalendar(inputId){
+const input=document.getElementById(inputId);if(!input)return;
+rcCalTarget=input;
+const val=input.value;
+if(val){const d=new Date(val);if(!isNaN(d))rcCalDate=d;else rcCalDate=new Date()}
+else rcCalDate=new Date();
+rcCalSelected=val;
+rcRenderCalendar();
+}
+function rcRenderCalendar(){
+let overlay=document.getElementById('rcCalendarOverlay');
+if(!overlay){overlay=document.createElement('div');overlay.id='rcCalendarOverlay';overlay.className='rc-calendar-overlay';document.body.appendChild(overlay)}
+const y=rcCalDate.getFullYear(),m=rcCalDate.getMonth();
+const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const today=new Date().toISOString().split('T')[0];
+const firstDay=new Date(y,m,1).getDay();
+const daysInMonth=new Date(y,m+1,0).getDate();
+const prevDays=new Date(y,m,0).getDate();
+let daysHtml='';
+for(let i=firstDay-1;i>=0;i--){daysHtml+=`<div class="rc-cal-day rc-other">${prevDays-i}</div>`}
+for(let d=1;d<=daysInMonth;d++){
+const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+let cls='rc-cal-day';
+if(dateStr===today)cls+=' rc-today';
+if(dateStr===rcCalSelected)cls+=' rc-selected';
+daysHtml+=`<div class="${cls}" onclick="rcSelectDay('${dateStr}')">${d}</div>`
+}
+const totalCells=firstDay+daysInMonth;
+const remain=(7-totalCells%7)%7;
+for(let d=1;d<=remain;d++){daysHtml+=`<div class="rc-cal-day rc-other">${d}</div>`}
+overlay.innerHTML=`<div class="rc-calendar"><div class="rc-cal-header"><div class="rc-cal-title">${y}年${monthNames[m]}</div><div class="rc-cal-nav"><button onclick="rcCalPrev()">‹</button><button onclick="rcCalToday()">今</button><button onclick="rcCalNext()">›</button></div></div><div class="rc-cal-weekdays"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div><div class="rc-cal-days">${daysHtml}</div><div class="rc-cal-actions"><button class="rc-cal-cancel" onclick="rcCloseCalendar()">取消</button><button class="rc-cal-ok" onclick="rcConfirmCalendar()">确定</button></div></div>`;
+overlay.style.display='flex';
+overlay.onclick=(e)=>{if(e.target===overlay)rcCloseCalendar()};
+}
+function rcSelectDay(dateStr){rcCalSelected=dateStr;rcRenderCalendar()}
+function rcCalPrev(){rcCalDate.setMonth(rcCalDate.getMonth()-1);rcRenderCalendar()}
+function rcCalNext(){rcCalDate.setMonth(rcCalDate.getMonth()+1);rcRenderCalendar()}
+function rcCalToday(){rcCalDate=new Date();rcCalSelected=new Date().toISOString().split('T')[0];rcRenderCalendar()}
+function rcCloseCalendar(){const o=document.getElementById('rcCalendarOverlay');if(o)o.style.display='none'}
+function rcConfirmCalendar(){if(rcCalSelected&&rcCalTarget){rcCalTarget.value=rcCalSelected}rcCloseCalendar()}
 const NAV=[
 {section:'概览',items:[{id:'home',label:'工作台首页',icon:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22 9 12 15 12 15 22'}]},
 {section:'客源 · 预约',items:[
@@ -302,13 +366,16 @@ if(payCb){payCb({amount,method:paySelectedMethod});payCb=null}
 });
 
 // ============ 充值弹窗（非会员完成服务时充卡）============
-let rcCb=null,rcSelectedMethod='',rcConsumeSource='recharge';
+let rcCb=null,rcSelectedMethod='',rcConsumeSource='recharge',rcCurrentStep=1;
 function showRechargeDialog(title,custName,defaultAmount,defaultConsumeHours,defaultConsumeAmount,cb){
 document.getElementById('rechargeTitle').textContent=title||'新增充值';
 document.getElementById('rcCustName').value=custName||'';
+document.getElementById('rcCustNameField').style.display=custName?'block':'none';
 document.getElementById('rcHours').value='';
 document.getElementById('rcGiftHours').value='0';
 document.getElementById('rcAmount').value=defaultAmount||'';
+document.getElementById('rcConsumeDate').value=new Date().toISOString().split('T')[0];
+document.getElementById('rcDate').value=new Date().toISOString().split('T')[0];
 // 消费信息默认值（从预约数据预填）
 document.getElementById('rcConsumeHours').value=defaultConsumeHours||'';
 document.getElementById('rcConsumeAmount').value=defaultConsumeAmount||'';
@@ -321,7 +388,33 @@ sel.innerHTML=(DB.cardTypes||[]).map(t=>`<option value="${t.name}">${t.name}（$
 // 支付方式按钮
 const btns=document.getElementById('rcPayMethodBtns');
 btns.innerHTML=PAY_METHODS.map(m=>`<div class="pay-method-btn" data-method="${m}" onclick="selectRcMethod('${m}')">${m}</div>`).join('');
+rcCurrentStep=1;rcShowStep(1);
 document.getElementById('rechargeOverlay').classList.add('show');
+}
+function rcShowStep(step){
+rcCurrentStep=step;
+document.getElementById('rcStep1').style.display=step===1?'block':'none';
+document.getElementById('rcStep2').style.display=step===2?'block':'none';
+document.getElementById('rcStep3').style.display=step===3?'block':'none';
+const bars=document.getElementById('rcStepIndicator').children;
+for(let i=0;i<bars.length;i++)bars[i].style.background=i<step?'var(--accent)':'var(--bg-hover)';
+document.getElementById('rcPrev').style.display=step===1?'none':'block';
+document.getElementById('rcNext').style.display=step===3?'none':'block';
+document.getElementById('rcConfirm').style.display=step===3?'block':'none';
+if(step===3)rcUpdateReview();
+document.querySelector('#rechargeOverlay .confirm-box').scrollTop=0;
+}
+function rcUpdateReview(){
+const ch=parseFloat(document.getElementById('rcConsumeHours').value)||0;
+const ca=parseFloat(document.getElementById('rcConsumeAmount').value)||0;
+const h=parseFloat(document.getElementById('rcHours').value)||0;
+const g=parseFloat(document.getElementById('rcGiftHours').value)||0;
+const a=parseFloat(document.getElementById('rcAmount').value)||0;
+const ct=document.getElementById('rcCardType').value;
+const cd=document.getElementById('rcConsumeDate').value||'今天';
+const rd=document.getElementById('rcDate').value||'今天';
+const sl=rcConsumeSource==='gift'?'赠送时长':'充值时长';
+document.getElementById('rcReviewText').textContent=`消费：${ch}h / ¥${ca}（${sl}） · 日期：${cd}\n充值：${ct} ${h}h（赠${g}h）¥${a} · 日期：${rd}`;
 }
 function selectRcMethod(m){
 rcSelectedMethod=m;
@@ -343,7 +436,6 @@ if(amtInput)amtInput.placeholder='如：300';
 }
 // 消费时长输入时，实时检查是否超过可用时长
 function onRcConsumeHoursInput(){
-// 这里只做提示，不阻止输入
 const h=parseFloat(document.getElementById('rcConsumeHours').value)||0;
 const rcHours=parseFloat(document.getElementById('rcHours').value)||0;
 const giftHours=parseFloat(document.getElementById('rcGiftHours').value)||0;
@@ -353,6 +445,22 @@ showToast('⚠️ 消费时长('+h+'h)超过'+(rcConsumeSource==='gift'?'赠送'
 }
 }
 document.getElementById('rcCancel').addEventListener('click',()=>{document.getElementById('rechargeOverlay').classList.remove('show');rcCb=null});
+document.getElementById('rcPrev').addEventListener('click',()=>{if(rcCurrentStep>1)rcShowStep(rcCurrentStep-1)});
+document.getElementById('rcNext').addEventListener('click',()=>{
+if(rcCurrentStep===1){
+const ch=parseFloat(document.getElementById('rcConsumeHours').value);
+if(!ch||ch<=0){showToast('请输入本次消费时长');return}
+const ca=parseFloat(document.getElementById('rcConsumeAmount').value)||0;
+if(rcConsumeSource!=='gift'&&ca<=0){showToast('请输入本次消费金额（赠送时长可填0）');return}
+rcShowStep(2);
+}else if(rcCurrentStep===2){
+const h=parseFloat(document.getElementById('rcHours').value);
+if(!h||h<=0){showToast('请输入充值时长');return}
+const a=parseFloat(document.getElementById('rcAmount').value);
+if(!a||a<=0){showToast('请输入充值金额');return}
+rcShowStep(3);
+}
+});
 document.getElementById('rcConfirm').addEventListener('click',()=>{
 const hours=parseFloat(document.getElementById('rcHours').value);
 if(!hours||hours<=0){showToast('请输入充值时长');return}
@@ -361,18 +469,16 @@ if(!amount||amount<=0){showToast('请输入充值金额');return}
 if(!rcSelectedMethod){showToast('请选择支付方式');return}
 const giftHours=parseFloat(document.getElementById('rcGiftHours').value)||0;
 const cardType=document.getElementById('rcCardType').value;
-// 本次消费信息
 const consumeHours=parseFloat(document.getElementById('rcConsumeHours').value)||0;
 const consumeAmount=parseFloat(document.getElementById('rcConsumeAmount').value)||0;
 if(consumeHours<=0){showToast('请输入本次消费时长');return}
-// 赠送时长消费金额可以为0，充值时长消费金额必须>0
 if(rcConsumeSource!=='gift'&&consumeAmount<=0){showToast('请输入本次消费金额（赠送时长可填0）');return}
-// 检查扣卡来源时长是否足够
 const sourceAvail=rcConsumeSource==='gift'?giftHours:hours;
 if(consumeHours>sourceAvail){showToast((rcConsumeSource==='gift'?'赠送':'充值')+'时长不足（需'+consumeHours+'h，仅'+sourceAvail+'h）');return}
 document.getElementById('rechargeOverlay').classList.remove('show');
-if(rcCb){rcCb({hours,giftHours,amount,cardType,method:rcSelectedMethod,consumeHours,consumeAmount,consumeSource:rcConsumeSource});rcCb=null}
+if(rcCb){rcCb({hours,giftHours,amount,cardType,method:rcSelectedMethod,consumeHours,consumeAmount,consumeSource:rcConsumeSource,date:document.getElementById('rcDate')?.value||new Date().toISOString().split('T')[0],consumeDate:document.getElementById('rcConsumeDate')?.value||new Date().toISOString().split('T')[0]});rcCb=null}
 });
+
 
 // ============ 三向联动计算 ============
 function calcThird(changed,durationField,priceField,totalField){
@@ -843,7 +949,8 @@ const cust=DB.customers.find(c=>c.id===a.custId);
 const custName=cust?cust.name:(a.custName||'散客');
 // 弹出充值表单（预填预约时的消费时长和总价）
 showRechargeDialog('新增充值 - 完成服务',custName,a.totalPrice||0,a.duration||0,a.totalPrice||0,(rc)=>{
-const date=new Date().toISOString().split('T')[0];
+const date=rc.date||new Date().toISOString().split('T')[0];
+const consumeDate=rc.consumeDate||date;
 const rechargeId=Date.now();
 // 临时散客充卡：先按名字查找已有客户，没有则自动创建并升级为会员
 let cust2=cust;
@@ -858,7 +965,7 @@ a.custId=newCustId;
 }
 }
 // 1. 创建充值记录（同步到充值记录里）
-DB.recharges.push({id:rechargeId,custId:a.custId,customer:custName,cardType:rc.cardType,hours:rc.hours,giftHours:rc.giftHours,amount:rc.amount,date,payMethod:rc.method});
+DB.recharges.push({id:rechargeId,custId:a.custId,customer:custName,cardType:rc.cardType,hours:rc.hours,giftHours:rc.giftHours,amount:rc.amount,date,payMethod:rc.method,consumeDate});
 // 2. 将客户升级为会员
 if(cust2){cust2.type='会员'}
 // 3. 自动扣卡（根据扣卡来源决定从充值时长还是赠送时长扣除）
@@ -875,14 +982,14 @@ if(needHours>sourceAvail){
 // 余额不足：先扣完来源时长，不足部分标注
 deductNote='预约完成扣卡（'+sourceLabel+'不足，仅扣'+sourceAvail+'h）';
 }
-DB.deductions.push({id:Date.now(),custId:a.custId,rechargeId,customer:custName,hours:Math.min(needHours,sourceAvail),unitPrice,totalPrice:consumeAmount,staff:st?st.name:'',date,note:deductNote,payMethod:consumeSource==='gift'?'赠送':'储卡',consumeSource});
+DB.deductions.push({id:Date.now(),custId:a.custId,rechargeId,customer:custName,hours:Math.min(needHours,sourceAvail),unitPrice,totalPrice:consumeAmount,staff:st?st.name:'',date:consumeDate,note:deductNote,payMethod:consumeSource==='gift'?'赠送':'储卡',consumeSource});
 }
 // 4. 更新预约状态 + 同步本次消费信息到预约记录
 a.status='done';a.custType='会员';
 a.consumeHours=rc.consumeHours;  // 本次实际消费时长
 a.consumeAmount=rc.consumeAmount;  // 本次实际消费金额（赠送可为0）
 a.consumeUnitPrice=unitPrice;  // 本次实际单价
-a.consumeDate=date;  // 完成日期
+a.consumeDate=consumeDate;  // 完成日期
 a.rechargeId=rechargeId;  // 关联的充值记录
 a.payMethod=rc.method;  // 充值支付方式
 a.consumeSource=consumeSource;  // 扣卡来源
@@ -1115,6 +1222,7 @@ c.innerHTML=`
 <div class="form-row"><div class="form-group"><label class="form-label">服务人员</label><select class="form-select" id="deductStaff"><option value="">请选择</option>${DB.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">扣除时长（小时）</label><input type="number" step="0.5" class="form-input" id="deductHours" oninput="calcThird('duration','deductHours','deductUnitPrice','deductTotalPrice')"></div></div>
 <div class="form-row"><div class="form-group"><label class="form-label">单次单价（元）</label><input type="number" class="form-input" id="deductUnitPrice" oninput="calcThird('price','deductHours','deductUnitPrice','deductTotalPrice')"></div><div class="form-group"><label class="form-label">本次总价（元）</label><input type="number" class="form-input" id="deductTotalPrice" oninput="calcThird('total','deductHours','deductUnitPrice','deductTotalPrice')"></div></div>
 <div class="calc-box"><div class="form-hint">✨ 三向联动：填入任意两项 → 第三项自动算出</div></div>
+<div class="form-group" style="margin-top:16px"><label class="form-label">消费日期</label><input type="text" class="form-input rc-date-input" id="deductDate" placeholder="点击选择日期" value="${new Date().toISOString().split('T')[0]}" style="min-height:44px" onclick="rcOpenCalendar('deductDate')" readonly></div>
 <div class="form-group" style="margin-top:16px"><label class="form-label">服务备注</label><textarea class="form-textarea" id="deductNote"></textarea></div>
 <button class="btn btn-solid" style="width:100%" onclick="executeDeduct()">确认扣卡</button>
 </div>`;
@@ -1138,6 +1246,7 @@ c.innerHTML=`
 <div class="form-group"><label class="form-label">消费金额（元）*</label><input type="number" class="form-input" id="nonMemAmount" placeholder="例如 200"></div>
 </div>
 <div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="nonMemNote" placeholder="可选备注"></textarea></div>
+<div class="form-group"><label class="form-label">消费日期</label><input type="text" class="form-input rc-date-input" id="nonMemDate" placeholder="点击选择日期" value="${new Date().toISOString().split('T')[0]}" style="min-height:44px" onclick="rcOpenCalendar('nonMemDate')" readonly></div>
 <div class="calc-box"><div class="form-hint">💡 点击「确认新增」后，将弹出支付方式选择（微信 / 支付宝 / 现金 / 美团 / 抖音），数据自动同步至数据分析</div></div>
 <button class="btn btn-solid" style="width:100%" onclick="addNonMemConsume()">确认新增</button>
 </div>
@@ -1167,7 +1276,7 @@ info.style.display='block';txt.textContent=`本笔充值剩余：${rem.remainHou
 function renderCardTypeList(){
 const c=document.getElementById('cardTypeListContainer');if(!c)return;
 if(!DB.cardTypes.length){c.innerHTML=es('M2 5h20v14H2z M2 10h20','暂无卡类型');return}
-c.innerHTML=DB.cardTypes.map(m=>`<div class="list-item" onclick="navigate('recharge-form',{id:${m.id}})"><div class="avatar" style="background:${m.type==='家庭卡'?'var(--cool)':'var(--accent)'};font-size:12px">${m.type==='家庭卡'?'家庭':'养护'}</div><div class="item-info"><div class="item-name">${m.name} <span class="tag ${m.type==='家庭卡'?'tag-blue':'tag-green'}">${m.type}</span></div><div class="item-meta"><span>卡总次数 ${m.totalTimes||0}</span><span>有效期 ${m.validity||'-'}</span></div></div><div class="item-actions"><button class="item-action-btn danger" onclick="event.stopPropagation();showConfirm('删除卡类型','确定删除「${m.name}」吗？',()=>{DB.cardTypes=DB.cardTypes.filter(x=>x.id!==${m.id});saveDB();showToast('已删除');renderCardTypeList()})">删除</button></div></div>`).join('');
+c.innerHTML=DB.cardTypes.map(m=>`<div class="list-item" onclick="navigate('recharge-form',{id:${m.id}})"><div class="avatar" style="background:${m.type==='家庭卡'?'var(--cool)':'var(--accent)'};font-size:12px">${m.type==='家庭卡'?'家庭':'养护'}</div><div class="item-info"><div class="item-name">${m.name} <span class="tag ${m.type==='家庭卡'?'tag-blue':'tag-green'}">${m.type}</span></div><div class="item-meta"><span>卡总次数 ${m.totalTimes||0}</span></div></div><div class="item-actions"><button class="item-action-btn danger" onclick="event.stopPropagation();showConfirm('删除卡类型','确定删除「${m.name}」吗？',()=>{DB.cardTypes=DB.cardTypes.filter(x=>x.id!==${m.id});saveDB();showToast('已删除');renderCardTypeList()})">删除</button></div></div>`).join('');
 }
 function renderRechargeTable(){
 const c=document.getElementById('rechargeTableContainer');if(!c)return;
@@ -1182,8 +1291,8 @@ const custId=prompt('选择客户(输入序号):\n'+DB.customers.map((c,i)=>`${i
 const c=DB.customers[parseInt(custId)-1];if(!c){showToast('序号无效');return}
 const cardType=prompt('卡类型(养护卡/家庭卡)：','养护卡');if(!cardType)return;
 const hours=parseFloat(prompt('充值时长(小时)：')||'0');const giftHours=parseFloat(prompt('赠送时长(小时)：')||'0');const amount=parseFloat(prompt('充值金额(元)：')||'0');
+const inputDate=prompt('充值日期(YYYY-MM-DD，留空=今天)：','');const date=inputDate?inputDate:new Date().toISOString().split('T')[0];
 showPayDialog('充值支付方式',amount,(pay)=>{
-const date=new Date().toISOString().split('T')[0];
 DB.recharges.push({id:Date.now(),custId:c.id,customer:c.name,cardType,hours,giftHours,amount,date,payMethod:pay.method});saveDB();showToast('充值记录已添加（'+pay.method+'），自动保存');renderRecharge();
 });
 }
@@ -1211,7 +1320,7 @@ const staffId=document.getElementById('nonMemStaff').value;const staffName=staff
 const note=document.getElementById('nonMemNote').value.trim();
 // 复用统一支付方式弹窗（微信/支付宝/现金/美团/抖音）
 showPayDialog('非会员消费 - 支付信息',amount,(pay)=>{
-const date=new Date().toISOString().split('T')[0];
+const date=document.getElementById('nonMemDate')?.value||new Date().toISOString().split('T')[0];
 DB.deductions.push({id:Date.now(),custId:null,rechargeId:null,customer:name,hours,unitPrice:Math.round(amount/hours*100)/100,totalPrice:pay.amount,staff:staffName,date,note:note||'非会员消费',payMethod:pay.method});
 saveDB();showToast('非会员消费已添加（'+pay.method+'），已同步至数据分析');renderRechargeContent();
 });
@@ -1234,7 +1343,7 @@ const unitPrice=parseFloat(document.getElementById('deductUnitPrice').value)||0;
 const staffId=document.getElementById('deductStaff').value;const staffName=staffId?DB.staff.find(s=>s.id===parseInt(staffId))?.name||'':'';
 const note=document.getElementById('deductNote').value.trim();
 const cust=DB.customers.find(x=>x.id===custId);if(!cust){showToast('客户不存在');return}
-const date=new Date().toISOString().split('T')[0];
+const date=document.getElementById('deductDate')?.value||new Date().toISOString().split('T')[0];
 DB.deductions.push({id:Date.now(),custId,rechargeId,customer:cust.name,hours,unitPrice,totalPrice,staff:staffName,date,note});
 saveDB();showToast('扣卡成功，自动保存');renderRecharge();
 }
