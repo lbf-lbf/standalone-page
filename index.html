@@ -231,15 +231,14 @@ td{padding:15px 16px;color:var(--text-2);border-bottom:1px solid var(--border-li
 <div class="confirm-overlay" id="editDeductionOverlay"><div class="confirm-box" style="max-width:460px;max-height:90vh;overflow-y:auto"><div class="confirm-title">编辑扣款记录</div><div class="pay-field"><label>客户姓名</label><input type="text" class="form-input" id="edCustomer" style="min-height:44px"></div><div class="pay-field"><label>扣除时长（小时）</label><input type="number" step="0.5" class="form-input" id="edHours" style="min-height:44px"></div><div class="pay-field"><label>单价（元）</label><input type="number" class="form-input" id="edUnitPrice" style="min-height:44px"></div><div class="pay-field"><label>总价（元）</label><input type="number" class="form-input" id="edTotalPrice" style="min-height:44px"></div><div class="pay-field"><label>支付方式</label><select class="form-select" id="edPayMethod" style="min-height:44px"><option value="">请选择</option><option>微信</option><option>支付宝</option><option>现金</option><option>美团</option><option>抖音</option><option>储卡</option><option>赠送</option></select></div><div class="pay-field"><label>服务人员</label><input type="text" class="form-input" id="edStaff" style="min-height:44px"></div><div class="pay-field"><label>消费日期</label><input type="text" class="form-input rc-date-input" id="edDate" placeholder="点击选择日期" style="min-height:44px" onclick="rcOpenCalendar('edDate')" readonly></div><div class="pay-field"><label>备注</label><textarea class="form-textarea" id="edNote"></textarea></div><div class="confirm-actions"><button class="btn btn-line" id="edCancel">取消</button><button class="btn btn-solid" id="edConfirm">保存</button></div></div></div>
 <script>
 // 版本检测：强制刷新缓存
-const APP_VERSION='v6.1';
+const RC_APP_VERSION='v6.1';
 try{
-const lastVersion=localStorage.getItem('app_version');
-if(lastVersion!==APP_VERSION){
-localStorage.setItem('app_version',APP_VERSION);
+const lastVersion=localStorage.getItem('rc_app_version');
+if(lastVersion!==RC_APP_VERSION){
+localStorage.setItem('rc_app_version',RC_APP_VERSION);
 if(lastVersion){
-// 版本变化时强制刷新（只用 location.reload() 一次）
-if(!sessionStorage.getItem('app_reloaded')){
-sessionStorage.setItem('app_reloaded','1');
+if(!sessionStorage.getItem('rc_app_reloaded')){
+sessionStorage.setItem('rc_app_reloaded','1');
 location.reload(true);
 }
 }
@@ -1445,7 +1444,7 @@ document.getElementById('content').innerHTML=phr('充值详情','','recharge',`<
 <div style="margin-top:12px"><div class="detail-label" style="margin-bottom:6px">消耗进度：${progress}%</div><div style="height:8px;background:var(--bg-hover);border-radius:4px;overflow:hidden"><div style="height:100%;width:${progress}%;background:var(--accent);border-radius:4px;transition:width .3s"></div></div></div>
 </div>
 <div class="section-header" style="margin-top:24px"><div class="section-title">关联扣卡记录（${relatedDeductions.length} 条）</div></div>
-${relatedDeductions.length===0?es('M2 5h20v14H2z M2 10h20','暂无关联扣卡记录'):`<div class="table-wrap"><table><thead><tr><th>服务人员</th><th>扣除时长</th><th>单价</th><th>总价</th><th>支付方式</th><th>日期</th><th>备注</th><th>操作</th></tr></thead><tbody>${relatedDeductions.map(d=>`<tr><td>${d.staff||'-'}</td><td>${d.hours}h</td><td>¥${d.unitPrice}</td><td>¥${d.totalPrice}</td><td>${d.payMethod?'<span class="tag tag-blue">'+d.payMethod+'</span>':'-'}</td><td>${d.date}</td><td>${d.note||'-'}</td><td><button class="item-action-btn primary" onclick="editDeductionFromDetail(${d.id},${r.id})">编辑</button> <button class="item-action-btn danger" onclick="deleteDeductionFromDetail(${d.id},${r.id})">删除</button></td></tr>`).join('')}</tbody></table></div>`}`};
+${relatedDeductions.length===0?es('M2 5h20v14H2z M2 10h20','暂无关联扣卡记录'):`<div class="table-wrap"><table><thead><tr><th>服务人员</th><th>扣除时长</th><th>单价</th><th>总价</th><th>支付方式</th><th>日期</th><th>备注</th><th>操作</th></tr></thead><tbody>${relatedDeductions.map(d=>`<tr><td>${d.staff||'-'}</td><td>${d.hours}h</td><td>¥${d.unitPrice}</td><td>¥${d.totalPrice}</td><td>${d.payMethod?'<span class="tag tag-blue">'+d.payMethod+'</span>':'-'}</td><td>${d.date}</td><td>${d.note||'-'}</td><td><button class="item-action-btn primary" onclick="editDeductionFromDetail(${d.id},${r.id})">编辑</button> <button class="item-action-btn danger" onclick="deleteDeductionFromDetail(${d.id},${r.id})">删除</button></td></tr>`).join('')}</tbody></table></div>`}`;
 }
 function deleteDeductionFromDetail(dedId,rcId){DB.deductions=DB.deductions.filter(x=>x.id!==dedId);saveDB();showToast('已删除，自动保存');navigate('recharge-detail',{id:rcId})}
 function editDeductionFromDetail(dedId,rcId){
